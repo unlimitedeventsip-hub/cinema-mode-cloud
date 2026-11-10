@@ -1,0 +1,34 @@
+name: Verify live Cinema Mode frontend
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cinema-live-frontend.yml"
+permissions:
+  contents: read
+jobs:
+  public-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify new UI and pairing-error fix are deployed publicly
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://cinema-mode-cloud.unlimited-events-ip.workers.dev"
+          curl --fail --silent --show-error --max-time 20 "$BASE/?mode=projector" -o /tmp/cinema-page.html
+          python3 - <<'PY'
+          html=open('/tmp/cinema-page.html',encoding='utf-8').read()
+          for marker in ('id="projectorGate"','id="pairDeviceForm"','id="apiStatusLabel"'):
+              assert marker in html, f'Missing deployed UI element: {marker}'
+          print('Deployed HTML includes projector pairing and backend status.')
+          PY
+          ASSET=$(grep -oE '/assets/index-[[:alnum:]_-]+\.js' /tmp/cinema-page.html | head -n1)
+          test -n "$ASSET"
+          curl --fail --silent --show-error --max-time 20 "$BASE$ASSET" -o /tmp/cinema-bundle.js
+          python3 - <<'PY'
+          data=open('/tmp/cinema-bundle.js',encoding='utf-8').read()
+          assert 'Nu se poate genera codul:' in data, 'Missing durable pairing error fix in deployed bundle'
+          assert 'Sistem conectat' in data, 'Missing live health status logic in deployed bundle'
+          print('Deployed JS includes pairing error and live health fixes.')
+          PY
