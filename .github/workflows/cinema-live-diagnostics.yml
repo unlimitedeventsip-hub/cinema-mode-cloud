@@ -1,0 +1,43 @@
+name: Check live Cinema Mode API
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cinema-live-diagnostics.yml"
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check publicly readable API health (no keys or logins)
+        shell: bash
+        run: |
+          set +e
+          BASE="https://cinema-mode-cloud.unlimited-events-ip.workers.dev"
+          STATUS=$(curl --connect-timeout 8 --max-time 20 -sS -o /tmp/cinema_health.json -w "%{http_code}" "$BASE/api/health")
+          echo "Health HTTP: $STATUS"
+          if [ "$STATUS" = "200" ]; then
+            python3 - <<'PY'
+          import json
+          with open('/tmp/cinema_health.json',encoding='utf-8') as f:
+              data=json.load(f)
+          checks=data.get('checks',{})
+          print('Ready:',data.get('ready'))
+          for key in ('storage','authConfig','ticketSecret','devicePairing'):
+              print(f'{key}: {checks.get(key, "missing")}')
+          PY
+          else
+            echo "Health endpoint unavailable or old Worker deployment"
+            head -c 300 /tmp/cinema_health.json || true
+          fi
+      - name: Check upload route without credentials (should return 401)
+        shell: bash
+        run: |
+          set +e
+          BASE="https://cinema-mode-cloud.unlimited-events-ip.workers.dev"
+          STATUS=$(curl --connect-timeout 8 --max-time 20 -sS -o /tmp/cinema_upload.json -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" -d '{"filename":"test.mp4","size":1}' "$BASE/api/upload/init")
+          echo "Unauthenticated upload HTTP: $STATUS"
+          if [ "$STATUS" != "401" ]; then echo "Expected HTTP 401 from the Cloudflare API route (no upload is performed).";fi
