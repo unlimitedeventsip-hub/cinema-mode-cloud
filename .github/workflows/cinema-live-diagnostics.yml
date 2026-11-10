@@ -32,6 +32,40 @@ jobs:
             echo "Health endpoint unavailable or old Worker deployment"
             head -c 300 /tmp/cinema_health.json || true
           fi
+      - name: Verify real pairing-code creation and pending-device poll (no secrets printed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://cinema-mode-cloud.unlimited-events-ip.workers.dev"
+          RESP="$(mktemp)"
+          STATUS=$(curl --connect-timeout 8 --max-time 25 -sS -o "$RESP" -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"name":"CI Cinema pairing smoke"}' "$BASE/api/device/start")
+          echo "Pairing start HTTP: $STATUS"
+          if [ "$STATUS" != "201" ]; then
+            python3 -c 'import json,sys; data=json.load(open(sys.argv[1]));print("Error:",data.get("error","unknown"))' "$RESP"
+            exit 1
+          fi
+          TOKEN=$(python3 - "$RESP" <<'PY'
+          import json,sys
+          payload=json.load(open(sys.argv[1]))
+          assert payload.get('state') == 'pending'
+          assert len(payload.get('pairingCode','')) == 8
+          assert len(payload.get('deviceToken','')) == 64
+          print(payload['deviceToken'])
+          PY
+          )
+          POLL="$(mktemp)"
+          POLL_STATUS=$(curl --connect-timeout 8 --max-time 25 -sS -o "$POLL" -w "%{http_code}" -X POST \
+            -H "Authorization: Device $TOKEN" "$BASE/api/device/poll")
+          echo "Pairing poll HTTP: $POLL_STATUS"
+          python3 - "$POLL" <<'PY'
+          import json,sys
+          payload=json.load(open(sys.argv[1]))
+          assert payload.get("state")=="pending", "Expected pending pairing state; got "+str(payload.get("state"))
+          print("Pairing state:",payload["state"])
+          PY
+          echo "The test device must be deleted from Supabase cinema_devices after this run."
       - name: Check upload route without credentials (should return 401)
         shell: bash
         run: |
