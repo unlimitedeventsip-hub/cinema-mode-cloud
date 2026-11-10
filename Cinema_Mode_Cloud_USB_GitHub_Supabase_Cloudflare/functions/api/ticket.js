@@ -1,0 +1,2 @@
+import {authenticate,ensureBucket,ownKey,makeTicket,json,failure} from '../_lib/security.js';
+export async function onRequestGet({request,env}){try{const user=await authenticate(request,env),bucket=ensureBucket(env),key=new URL(request.url).searchParams.get('key');if(!ownKey(key,user.id))return json({error:'Acces interzis'},403);const obj=await bucket.head(key);if(!obj)return json({error:'Fișier inexistent'},404);const ticket=await makeTicket(key,env);return json({url:'/api/play?ticket='+encodeURIComponent(ticket),expiresIn:14400});}catch(e){return failure(e);}}

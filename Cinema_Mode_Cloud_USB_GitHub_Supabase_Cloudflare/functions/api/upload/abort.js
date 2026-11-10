@@ -1,0 +1,2 @@
+import {authenticate,ensureBucket,ownKey,json,failure} from '../../_lib/security.js';
+export async function onRequestPost({request,env}){try{const user=await authenticate(request,env),bucket=ensureBucket(env),{key,uploadId}=await request.json();if(!ownKey(key,user.id)||!uploadId)return json({error:'Upload invalid'},400);await bucket.resumeMultipartUpload(key,uploadId).abort();return json({ok:true});}catch(e){return failure(e);}}
