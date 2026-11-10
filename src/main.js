@@ -125,6 +125,7 @@ async function makeProjectorPairing() {
 }
 async function initializeProjector() {
  status.deviceMode=true;
+ if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
  document.body.classList.add('projector-mode');
  $('auth').classList.add('hidden');
  $('projectorGate').classList.remove('hidden');
