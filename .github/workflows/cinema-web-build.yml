@@ -22,5 +22,6 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
+      - run: npm run test:api
       - run: npm run build
       - run: test -f dist/index.html && test -f dist/manifest.webmanifest
