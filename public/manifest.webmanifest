@@ -1,0 +1,20 @@
+{
+  "name": "Cinema Mode — Proiector",
+  "short_name": "Cinema Mode",
+  "description": "Cinema Mode pentru proiector, asociere prin cod de pe laptop și redare privată.",
+  "id": "/cinema-projector",
+  "start_url": "/?mode=projector",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#090b12",
+  "theme_color": "#090b12",
+  "icons": [
+    {
+      "src": "/cinema-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
