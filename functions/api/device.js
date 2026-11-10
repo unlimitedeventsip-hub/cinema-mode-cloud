@@ -50,7 +50,7 @@ async function getDevice(request,env) {
   const token=deviceHeader(request);
   if(!token||!DEVICE_RE.test(token))throw Object.assign(new Error('Acest proiector nu are o asociere validă.'),{status:401});
   const items=await database(env,'cinema_devices',{filters:{
-    select:'id,owner_id,status,pairing_expires_at,device_name,last_command_id,paired_at',
+    select:'id,owner_id,status,pairing_expires_at,device_name,last_command_id,paired_at,last_seen_at',
     token_sha256:'eq.'+await sha(token),limit:'1'
   }});
   const device=items?.[0];
@@ -146,6 +146,7 @@ async function poll(request,env) {
   const dev=await getDevice(request,env);
   if(dev.status==='pending')return json({state:Date.parse(dev.pairing_expires_at)<Date.now()?'expired':'pending',expiresAt:dev.pairing_expires_at});
   requirePaired(dev);
+  if(!dev.last_seen_at || Date.now()-Date.parse(dev.last_seen_at)>30000)await database(env,'cinema_devices',{method:'PATCH',filters:{id:'eq.'+dev.id,status:'eq.paired'},body:{last_seen_at:new Date().toISOString()}});
   const commands=await database(env,'cinema_commands',{filters:{
     select:'id,action,film_id,value',
     owner_id:'eq.'+dev.owner_id,id:'gt.'+dev.last_command_id,order:'id.asc',limit:'15'
