@@ -15,5 +15,12 @@
       "binding": "CINEMA_BUCKET",
       "bucket_name": "cinema-films"
     }
-  ]
+  ],
+  "vars": {
+    "SUPABASE_URL": "https://asixkabhesmhbqunxqby.supabase.co",
+    "SUPABASE_ANON_KEY": "sb_publishable_bzuYqcA657JOaxAJ_B0zxQ_Pse2_QXt"
+  },
+  "observability": {
+    "enabled": true
+  }
 }
