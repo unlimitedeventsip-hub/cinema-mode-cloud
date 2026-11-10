@@ -27,7 +27,7 @@ async function logout(){if(status.guest){location.assign('/');return;}clearInter
 async function loadFilms(){const {data,error}=await client.from('cinema_films').select('*').order('created_at',{ascending:false});if(error){toast('Nu pot încărca biblioteca. Ai rulat schema.sql în Supabase?',true);console.error(error);return;}status.films=data||[];drawFilms();}
 function posterMarkup(film){const p=safePoster(film.poster_url);return p?`<img src="${escapeHtml(p)}" alt="Poster ${escapeHtml(film.title)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:'<span class="poster-glyph">◈</span>';}
 function drawFilms(){$('filmCount').textContent=status.films.length;const filter=$('searchInput').value.toLowerCase();const films=status.films.filter(f=>f.title.toLowerCase().includes(filter));$('emptyLibrary').classList.toggle('hidden',status.films.length>0);$('filmGrid').innerHTML=films.map(f=>`<button class="film-card" data-film="${escapeHtml(f.id)}" title="Redă ${escapeHtml(f.title)}"><div class="film-poster">${posterMarkup(f)}<span class="film-play">▶</span></div><div class="film-meta"><h3>${escapeHtml(f.title)}</h3><p>${f.year||'Cinema'} · ${time(f.duration_s)} · Original</p></div></button>`).join('');$('remoteList').innerHTML=status.films.map(f=>`<button data-remote-film="${escapeHtml(f.id)}"><div class="remote-thumb">${posterMarkup(f)}</div><div><strong>${escapeHtml(f.title)}</strong><small>${f.year||'Film'} · ${time(f.duration_s)}</small></div><span style="margin-left:auto;color:#e5bb80">▶</span></button>`).join('');}
-function setView(next){status.view=['library','screen','remote'].includes(next)?next:'library';if(status.guest&&status.view==='remote')status.view='screen';for(const v of ['library','screen','remote'])$(v+'View').classList.toggle('hidden',v!==status.view);document.querySelectorAll('[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view===status.view));$('breadcrumb').textContent=`SPAȚIUL TĂU / ${viewName(status.view)}`;history.replaceState({},'',status.view==='library'?'/':`/?mode=${status.view}`);if(status.view==='screen'){activateScreen();}if(status.view==='remote'){refreshRemoteState().catch(()=>{});listProjectors().catch(()=>{});}}
+function setView(next){status.view=['library','screen','remote'].includes(next)?next:'library';if(status.guest&&status.view==='remote')status.view='screen';for(const v of ['library','screen','remote'])$(v+'View').classList.toggle('hidden',v!==status.view);document.querySelectorAll('[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view===status.view));$('breadcrumb').textContent=`SPAȚIUL TĂU / ${viewName(status.view)}`;history.replaceState({},'',status.deviceMode?'/?mode=projector':(status.view==='library'?'/':`/?mode=${status.view}`));if(status.view==='screen'){activateScreen();}if(status.view==='remote'){refreshRemoteState().catch(()=>{});listProjectors().catch(()=>{});}}
 async function activateScreen(){if(!client||!status.user)return;if(status.screenReady)return;status.screenReady=true;try{const {data,error}=await client.from('cinema_commands').select('id').order('id',{ascending:false}).limit(1);if(!error && data?.length)status.commandId=Math.max(status.commandId,Number(data[0].id));const {data:state}=await client.from('cinema_state').select('*').eq('owner_id',status.user.id).maybeSingle();if(state?.film_id){const f=status.films.find(a=>a.id===state.film_id);if(f){await loadPlayer(f,false);video().currentTime=state.position_s||0;}}}catch(e){console.warn(e);} }
 
 async function videoTicket(key){const d=await api('/api/ticket?key='+encodeURIComponent(key));return d.url;}
@@ -107,21 +107,28 @@ async function deviceRequest(path,{method='POST',json,authorized=true}={}) {
 function showProjectorCode(code) {
  $('projectorPairCode').textContent=code?code.slice(0,4)+' '+code.slice(4):'•••• ••••';
 }
-function projectorMessage(message){$('projectorPairStatus').textContent=message;}
+function projectorMessage(message,error=false){const e=$('projectorPairStatus');e.textContent=message;e.classList.toggle('error',error);}
 async function makeProjectorPairing() {
  projectorMessage('Generăm un cod temporar...');
  const headers={'Content-Type':'application/json'};
  if(status.deviceToken)headers.Authorization='Device '+status.deviceToken;
- const res=await fetch('/api/device/start',{method:'POST',headers,body:JSON.stringify({name:'Proiector Cinema'}),cache:'no-store'});
- const data=await res.json().catch(()=>({}));
- if(!res.ok)throw Error(data.error||'Nu pot genera codul de asociere ('+res.status+').');
- status.deviceToken=data.deviceToken||status.deviceToken;
- status.devicePairCode=data.pairingCode;
- status.devicePaired=false;
- saveProjector({token:status.deviceToken,code:status.devicePairCode,expiresAt:data.expiresAt});
- $('projectorGate').classList.remove('hidden');$('shell').classList.add('hidden');
- showProjectorCode(status.devicePairCode);
- projectorMessage('Cod valabil 10 minute · Aștept aprobarea de pe laptop...');
+ try {
+   const res=await fetch('/api/device/start',{method:'POST',headers,body:JSON.stringify({name:'Proiector Cinema'}),cache:'no-store'});
+   const data=await res.json().catch(()=>({}));
+   if(!res.ok)throw Error(data.error||'API-ul de asociere a returnat eroarea HTTP '+res.status+'.');
+   if(!data.pairingCode||!data.deviceToken&&!status.deviceToken)throw Error('API-ul nu a trimis codul de asociere.');
+   status.deviceToken=data.deviceToken||status.deviceToken;
+   status.devicePairCode=data.pairingCode;
+   status.devicePaired=false;
+   saveProjector({token:status.deviceToken,code:status.devicePairCode,expiresAt:data.expiresAt});
+   $('projectorGate').classList.remove('hidden');$('shell').classList.add('hidden');
+   showProjectorCode(status.devicePairCode);
+   projectorMessage('Cod valabil 10 minute · Aștept aprobarea de pe laptop...');
+ } catch (error) {
+   showProjectorCode('');
+   projectorMessage('Nu se poate genera codul: '+(error.message||'Eroare necunoscută')+'. Verifică configurarea Cloudflare și apasă „Generează cod nou”.',true);
+   throw error;
+ }
 }
 async function initializeProjector() {
  status.deviceMode=true;
@@ -130,14 +137,18 @@ async function initializeProjector() {
  $('auth').classList.add('hidden');
  $('projectorGate').classList.remove('hidden');
  $('shell').classList.add('hidden');
- let saved=storedProjector();
+ const saved=storedProjector();
  if(saved?.token&&/^[0-9a-f]{64}$/.test(saved.token)){
    status.deviceToken=saved.token;
    status.devicePairCode=saved.code;
    if(saved.code&&Date.parse(saved.expiresAt)>Date.now())showProjectorCode(saved.code);
    projectorMessage('Verificăm asocierea salvată...');
- }else await makeProjectorPairing();
- await projectorPoll();
+ } else {
+   try { await makeProjectorPairing(); }
+   catch(error) { console.warn('Asociere proiector:',error.message); }
+ }
+ try { await projectorPoll(); }
+ catch(error) { projectorMessage('Nu pot verifica asocierea: '+error.message,true); }
  clearInterval(deviceInterval);
  deviceInterval=setInterval(()=>projectorPoll().catch(err=>console.warn('Projector:',err)),2500);
 }
