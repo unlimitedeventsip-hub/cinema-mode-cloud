@@ -37,7 +37,8 @@ export default {
       const checks = {
         storage: Boolean(env.CINEMA_BUCKET),
         authConfig: Boolean((env.SUPABASE_URL || env.VITE_SUPABASE_URL) && (env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY)),
-        ticketSecret: Boolean(env.TICKET_SECRET && env.TICKET_SECRET.length >= 32)
+        ticketSecret: Boolean(env.TICKET_SECRET && env.TICKET_SECRET.length >= 32),
+        devicePairing: Boolean(env.SUPABASE_SERVER_KEY)
       };
       return json({service:'Cinema Mode API',ready:Object.values(checks).every(Boolean),checks});
     }
