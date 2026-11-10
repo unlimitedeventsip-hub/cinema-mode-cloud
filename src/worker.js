@@ -4,6 +4,7 @@ import { onRequestPost as uploadComplete } from '../functions/api/upload/complet
 import { onRequestPost as uploadAbort } from '../functions/api/upload/abort.js';
 import { onRequestPost as deleteMovie } from '../functions/api/delete.js';
 import { onRequestGet as ticket } from '../functions/api/ticket.js';
+import { onRequest as deviceHandler } from '../functions/api/device.js';
 import { onRequestGet as playGet, onRequestHead as playHead } from '../functions/api/play.js';
 
 const routes = {
@@ -40,6 +41,7 @@ export default {
       };
       return json({service:'Cinema Mode API',ready:Object.values(checks).every(Boolean),checks});
     }
+    if (pathname.startsWith('/api/device/')) return deviceHandler({request,env,ctx});
     if (pathname.startsWith('/api/')) {
       const route = routes[pathname];
       if (!route) return json({error:'API route not found'},404);
