@@ -2,3 +2,41 @@
 
 /* USB / local-first additions */
 .guest-divider{display:flex;align-items:center;gap:12px;color:#888e9b;font-size:12px;text-align:center;margin:19px 0 14px}.guest-divider:before,.guest-divider:after{content:'';height:1px;background:#353744;flex:1}.guest-help{font-size:12px!important;line-height:1.55;color:#8f95a4!important;margin-top:9px}.screen-header-actions{display:flex;flex-wrap:wrap;gap:10px}.subtitle-import{font-size:12px;padding:10px 12px}.nav-item:disabled{opacity:.38;cursor:not-allowed}@media(max-width:650px){.screen-header-actions{width:100%}.screen-header-actions button{flex:1}}
+
+
+/* Projector app / secure pairing */
+.projector-gate{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 15%,#5c412c55,transparent 45%),#090b12;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:24px}
+.projector-gate-card{width:min(950px,100%);text-align:center;padding:clamp(20px,4vw,65px);border:1px solid #3d3940;border-radius:26px;background:linear-gradient(135deg,#171922,#0e1019);box-shadow:0 35px 100px #0008}
+.projector-brand{font:800 clamp(19px,2vw,32px) 'Manrope',sans-serif;letter-spacing:3px;margin-bottom:33px;color:#fff}
+.projector-brand span{font-weight:400;color:#e7b66f}
+.projector-gate-card h1{font-size:clamp(35px,6vw,75px);line-height:1.1;margin:18px 0}
+.projector-gate-card h1 em{font-style:normal;color:#e9b665}
+.projector-gate-card p{color:#b2b5c0;font-size:clamp(14px,1.8vw,21px);line-height:1.7;max-width:760px;margin:15px auto}
+.projector-pair-code{font:800 clamp(34px,9vw,100px) 'Manrope',sans-serif;letter-spacing:clamp(3px,1vw,12px);color:#f7d39b;padding:25px 10px;margin:25px auto 10px;border:1px dashed #a37f51;border-radius:20px;background:#211e1b;max-width:770px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.projector-pair-status{color:#c9d4da;margin:17px 0;min-height:28px;font-weight:600}
+.projector-gate-actions{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:22px 0}
+.projector-gate-card small{display:block;font-size:12px;color:#858b9b;line-height:1.6}
+.projector-mode .sidebar,.projector-mode .topbar{display:none!important}
+.projector-mode .shell{display:block;padding-bottom:0}
+.projector-mode .workspace{width:100%}
+.projector-mode #screenView{padding:2vw!important}
+.projector-mode .player-box{max-height:78vh;margin-inline:auto}
+.projector-mode .screen-tip{display:none}
+.pairing-panel{margin:0 0 25px;padding:25px;background:#131720;border:1px solid #37313a;border-radius:18px}
+.pairing-head{display:flex;justify-content:space-between;align-items:center;gap:25px}
+.pairing-head h3{font-size:23px;margin:12px 0 8px}
+.pairing-head p{color:#a5a9b8;font-size:13px;line-height:1.7;max-width:720px;margin:0}
+.pairing-panel label{display:block;font-size:12px;font-weight:700;color:#b6bbc7;margin:20px 0 9px}
+.pair-code-row{display:flex;gap:12px;align-items:center}
+.pair-code-row input{padding:15px 17px;background:#0c0f18;border:1px solid #434554;border-radius:12px;letter-spacing:4px;text-transform:uppercase;font-weight:800;font-size:22px;min-width:180px;max-width:280px;width:100%}
+.paired-heading{display:flex;justify-content:space-between;align-items:center;margin:25px 0 12px}
+.paired-heading .text-button{padding:4px}
+.paired-device-list{display:grid;gap:10px}
+.paired-device{display:flex;align-items:center;gap:15px;padding:12px 14px;background:#10131d;border:1px solid #2e323e;border-radius:12px}
+.paired-device>div:nth-child(2){flex:1}
+.paired-device strong,.paired-device small{display:block}
+.paired-device strong{font-size:14px}
+.paired-device small,.pair-empty{color:#939aaa;font-size:12px}
+.paired-symbol{display:grid;place-items:center;color:#e8b96c;background:#383127;border-radius:10px;width:40px;height:40px}
+.paired-device .secondary-button{padding:9px 12px;font-size:11px}
+@media(max-width:700px){.pairing-head{align-items:stretch;flex-direction:column}.pair-code-row{flex-direction:column;align-items:stretch}.pair-code-row input{max-width:none}.projector-gate-card{padding:25px 12px}.projector-gate{padding:8px}.projector-mode #screenView{padding:12px!important}}
