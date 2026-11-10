@@ -25,3 +25,5 @@ jobs:
       - run: npm run test:api
       - run: npm run build
       - run: test -f dist/index.html && test -f dist/manifest.webmanifest
+      - name: Verify Cloudflare Worker bundle and bindings config (no deployment)
+        run: npx --yes wrangler@4 deploy --dry-run --outdir .tmp-cinema-worker
